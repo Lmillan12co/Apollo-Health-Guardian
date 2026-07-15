@@ -2,7 +2,7 @@ generator client {
   provider = "prisma-client-js"
 }
 
- datasource db {
+datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
@@ -11,6 +11,7 @@ model User {
   id        String   @id @default(cuid())
   email     String   @unique
   name      String
+  password  String
   role      String
   createdAt DateTime @default(now())
 }
@@ -19,5 +20,12 @@ model Patient {
   id        String   @id @default(cuid())
   name      String
   birthDate DateTime?
+  createdAt DateTime @default(now())
+}
+
+model Caregiver {
+  id        String   @id @default(cuid())
+  name      String
+  patientId String
   createdAt DateTime @default(now())
 }
