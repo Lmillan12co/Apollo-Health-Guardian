@@ -1,0 +1,11 @@
+{
+  "name": "apollo-health-guardian",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "echo Start development services",
+    "build": "echo Build all apps",
+    "test": "echo Run tests"
+  },
+  "packageManager": "pnpm@9.0.0"
+}
