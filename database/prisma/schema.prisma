@@ -17,15 +17,47 @@ model User {
 }
 
 model Patient {
-  id        String   @id @default(cuid())
+  id        String          @id @default(cuid())
   name      String
   birthDate DateTime?
+  caregivers Caregiver[]
+  seizures  SeizureEvent[]
+  medications Medication[]
+  alerts    Alert[]
   createdAt DateTime @default(now())
 }
 
 model Caregiver {
-  id        String   @id @default(cuid())
+  id        String  @id @default(cuid())
   name      String
   patientId String
+  patient   Patient @relation(fields: [patientId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model Medication {
+  id        String  @id @default(cuid())
+  name      String
+  dosage    String?
+  schedule  String?
+  patientId String
+  patient   Patient @relation(fields: [patientId], references: [id])
+}
+
+model SeizureEvent {
+  id              String   @id @default(cuid())
+  occurredAt      DateTime @default(now())
+  durationSeconds Int?
+  notes           String?
+  patientId       String
+  patient         Patient @relation(fields: [patientId], references: [id])
+}
+
+model Alert {
+  id        String   @id @default(cuid())
+  type      String
+  status    String
+  patientId String
+  patient   Patient @relation(fields: [patientId], references: [id])
   createdAt DateTime @default(now())
 }
