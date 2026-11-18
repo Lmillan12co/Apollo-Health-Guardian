@@ -1,3 +1,5 @@
+import { prisma } from '../db';
+
 export interface CreateSeizureInput {
   patientId: string;
   occurredAt: Date;
@@ -10,4 +12,15 @@ export function prepareSeizureEvent(input: CreateSeizureInput) {
     ...input,
     occurredAt: input.occurredAt ?? new Date(),
   };
+}
+
+export async function logSeizureEvent(input: CreateSeizureInput) {
+  return prisma.seizureEvent.create({ data: prepareSeizureEvent(input) });
+}
+
+export async function listSeizuresForPatient(patientId: string) {
+  return prisma.seizureEvent.findMany({
+    where: { patientId },
+    orderBy: { occurredAt: 'desc' },
+  });
 }

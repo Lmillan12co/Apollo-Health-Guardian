@@ -1,0 +1,10 @@
+# Secrets — nunca se suben a Git
+.env
+.env.local
+
+# Dependencias y build
+node_modules/
+dist/
+
+# Sistema / editor
+.DS_Store

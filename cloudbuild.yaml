@@ -1,0 +1,45 @@
+# Cloud Build: build the API image, push it, deploy to Cloud Run.
+#
+# Run from the repo root (after copying this file there):
+#   gcloud builds submit --config cloudbuild.yaml .
+#
+# BEFORE the first run (see GUIA-DESPLIEGUE-CLOUD-RUN.md):
+#   1. Create the Artifact Registry repository "apollo" in your region.
+#   2. Create two Secret Manager secrets:
+#        apollo-database-url  -> the PostgreSQL connection string
+#        apollo-jwt-secret    -> a long random secret for signing JWTs
+#   3. Grant the Cloud Build service account access to read those secrets.
+
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/apollo/apollo-api:$SHORT_SHA'
+      - '-f'
+      - 'apps/api/Dockerfile'
+      - '.'
+
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/apollo/apollo-api:$SHORT_SHA'
+
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: 'gcloud'
+    args:
+      - 'run'
+      - 'deploy'
+      - 'apollo-api'
+      - '--image=${_REGION}-docker.pkg.dev/$PROJECT_ID/apollo/apollo-api:$SHORT_SHA'
+      - '--region=${_REGION}'
+      - '--platform=managed'
+      - '--allow-unauthenticated'
+      - '--set-secrets=DATABASE_URL=apollo-database-url:latest,JWT_SECRET=apollo-jwt-secret:latest'
+      - '--set-env-vars=NODE_ENV=production'
+
+substitutions:
+  _REGION: us-central1
+
+options:
+  logging: CLOUD_LOGGING_ONLY
