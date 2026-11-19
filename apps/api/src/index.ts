@@ -27,7 +27,16 @@ if (!process.env.DATABASE_URL) {
 
 const app = express();
 
-app.use(cors());
+// CORS is allow-listed: only the origins in CORS_ORIGIN (comma-separated)
+// may call the API from a browser. The demo page (demo/index.html) calls the
+// API cross-origin, so set CORS_ORIGIN to the origin that serves the demo
+// page when you deploy it. With CORS_ORIGIN unset, no cross-origin browser
+// call is allowed at all (safest default).
+const corsOrigins = (process.env.CORS_ORIGIN ?? '')
+  .split(',')
+  .map((o) => o.trim())
+  .filter(Boolean);
+app.use(cors({ origin: corsOrigins.length > 0 ? corsOrigins : false }));
 app.use(express.json());
 
 app.get('/health', (_req, res) => {

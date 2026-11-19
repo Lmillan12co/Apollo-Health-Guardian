@@ -1,4 +1,5 @@
 import { prisma } from '../db';
+import { assertPatientOwned } from '../patients/patients.service';
 
 export interface CreateSeizureInput {
   patientId: string;
@@ -14,11 +15,13 @@ export function prepareSeizureEvent(input: CreateSeizureInput) {
   };
 }
 
-export async function logSeizureEvent(input: CreateSeizureInput) {
+export async function logSeizureEvent(input: CreateSeizureInput, userId: string) {
+  await assertPatientOwned(input.patientId, userId);
   return prisma.seizureEvent.create({ data: prepareSeizureEvent(input) });
 }
 
-export async function listSeizuresForPatient(patientId: string) {
+export async function listSeizuresForPatient(patientId: string, userId: string) {
+  await assertPatientOwned(patientId, userId);
   return prisma.seizureEvent.findMany({
     where: { patientId },
     orderBy: { occurredAt: 'desc' },

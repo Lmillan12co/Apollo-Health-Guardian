@@ -9,6 +9,10 @@
 #        apollo-database-url  -> the PostgreSQL connection string
 #        apollo-jwt-secret    -> a long random secret for signing JWTs
 #   3. Grant the Cloud Build service account access to read those secrets.
+#   4. Decide where the demo page (demo/index.html) is hosted and pass its
+#      origin as CORS_ORIGIN when deploying (add it to the --set-env-vars in
+#      the deploy step below). Until then the API blocks all cross-origin
+#      browser calls, so the demo page's "Connect" will fail.
 
 steps:
   - name: 'gcr.io/cloud-builders/docker'
