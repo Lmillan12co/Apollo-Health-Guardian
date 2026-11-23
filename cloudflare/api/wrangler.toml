@@ -1,0 +1,26 @@
+# Apollo Health Guardian API on Cloudflare Workers (free tier, no card).
+# Deploy with: cd api && npm install && npm run build && wrangler deploy
+# See ../README.md for the full steps.
+name = "apollo-api"
+main = "src/index.ts"
+compatibility_date = "2026-11-01"
+compatibility_flags = ["nodejs_compat"]
+
+# The demo page (public/index.html) is served from the same Worker, so the
+# demo and the API share one URL and need no CORS setup between them.
+[assets]
+directory = "./public"
+
+# Non-secret settings. Secrets (DATABASE_URL, JWT_SECRET) are set with
+# `wrangler secret put` and NEVER appear in this file.
+[vars]
+JWT_EXPIRES_IN = "7d"
+CORS_ORIGIN = ""
+
+# Build step: generate the Prisma client. NOTE: this must be plain
+# `prisma generate` (no --no-engine): Prisma 6.19 rejects the adapter if
+# the client was generated with --no-engine. The query-engine binary is
+# downloaded but never used at runtime on Workers (the Neon HTTP driver
+# replaces it); it only satisfies the client's own validation.
+[build]
+command = "npm run build"

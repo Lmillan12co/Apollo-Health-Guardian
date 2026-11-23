@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Apollo Health Guardian — Caregiver Demo</title>
+<style>
+  :root { --bg:#f4f6fb; --card:#ffffff; --ink:#1c2433; --muted:#5b6b82; --line:#e3e8f0;
+    --brand:#4f46e5; --brand-soft:#eef2ff; --green:#15803d; --green-soft:#dcfce7;
+    --red:#dc2626; --red-soft:#fee2e2; --amber:#b45309; --amber-soft:#fef3c7; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg); color:var(--ink); line-height:1.5; }
+  header { background:linear-gradient(135deg,#312e81,#4f46e5); color:#fff; padding:28px 20px 22px; }
+  header .wrap, main .wrap, footer .wrap { max-width:960px; margin:0 auto; }
+  header h1 { margin:0 0 6px; font-size:28px; letter-spacing:-.02em; }
+  header p { margin:0; opacity:.92; max-width:640px; }
+  .badge { display:inline-block; background:#ffffff22; border:1px solid #ffffff55; color:#fff;
+    font-size:12px; font-weight:600; padding:3px 10px; border-radius:999px; margin-bottom:10px; }
+  main { padding:20px 16px 40px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:14px;
+    padding:18px 20px; margin-bottom:16px; box-shadow:0 1px 3px rgba(16,24,40,.05); }
+  .card h2 { margin:0 0 4px; font-size:19px; }
+  .card h3 { margin:18px 0 8px; font-size:15px; }
+  .muted { color:var(--muted); font-size:14px; }
+  .demo-banner { background:var(--amber-soft); border:1px solid #fcd34d; color:#78350f;
+    border-radius:12px; padding:12px 16px; margin-bottom:16px; font-size:14px; }
+  .demo-banner b { font-weight:700; }
+  .row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+  input, select, textarea { font:inherit; padding:9px 11px; border:1px solid var(--line);
+    border-radius:9px; background:#fff; color:var(--ink); }
+  input[type=text], input[type=email], input[type=password], input[type=url] { flex:1; min-width:220px; }
+  button { font:inherit; font-weight:600; border:0; border-radius:9px; padding:10px 16px;
+    cursor:pointer; background:var(--brand); color:#fff; }
+  button.secondary { background:#fff; color:var(--brand); border:1px solid var(--brand); }
+  button.danger { background:var(--red); }
+  button:disabled { opacity:.55; cursor:not-allowed; }
+  .pill { display:inline-block; font-size:12px; font-weight:700; padding:3px 10px; border-radius:999px; }
+  .pill.live { background:var(--green-soft); color:var(--green); }
+  .pill.demo { background:var(--amber-soft); color:var(--amber); }
+  .pill.off { background:#e5e7eb; color:#374151; }
+  .patients { display:flex; gap:10px; flex-wrap:wrap; }
+  .patient-chip { border:1px solid var(--line); border-radius:12px; padding:10px 14px; cursor:pointer;
+    background:#fff; min-width:170px; }
+  .patient-chip.active { border-color:var(--brand); background:var(--brand-soft); }
+  .patient-chip b { display:block; font-size:15px; }
+  .patient-chip span { font-size:13px; color:var(--muted); }
+  table { width:100%; border-collapse:collapse; font-size:14px; }
+  th, td { text-align:left; padding:8px 6px; border-bottom:1px solid var(--line); vertical-align:top; }
+  th { color:var(--muted); font-size:12px; text-transform:uppercase; letter-spacing:.04em; }
+  .med { display:flex; justify-content:space-between; gap:10px; padding:10px 2px;
+    border-bottom:1px solid var(--line); font-size:14px; }
+  .med:last-child { border-bottom:0; }
+  .taken { color:var(--green); font-weight:600; font-size:13px; }
+  .sos { width:100%; font-size:18px; padding:16px; border-radius:12px; }
+  .alert-box { border-radius:10px; padding:12px 14px; font-size:14px; margin-top:12px; display:none; }
+  .alert-box.show { display:block; }
+  .alert-box.ok { background:var(--green-soft); color:#14532d; }
+  .alert-box.warn { background:var(--red-soft); color:#7f1d1d; }
+  .arch { display:flex; gap:8px; flex-wrap:wrap; align-items:stretch; }
+  .arch .step { flex:1; min-width:150px; background:var(--brand-soft); border:1px solid #c7d2fe;
+    border-radius:10px; padding:12px; font-size:13px; }
+  .arch .step b { display:block; margin-bottom:2px; }
+  .arch .arrow { align-self:center; color:var(--muted); font-weight:700; }
+  footer { border-top:1px solid var(--line); padding:20px 16px 32px; color:var(--muted); font-size:13px; }
+  footer a { color:var(--brand); }
+  .hidden { display:none; }
+  @media (max-width:640px){ header h1{font-size:23px;} .arch{flex-direction:column;} .arch .arrow{transform:rotate(90deg);} }
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <span class="badge">Product Hunt &times; Google Cloud Run &middot; Build for Good</span>
+    <h1>Apollo Health Guardian</h1>
+    <p>Epilepsy care and monitoring for patients and caregivers: seizure logging,
+       medication schedules, and an SOS alert that reaches the right person fast.</p>
+  </div>
+</header>
+
+<main>
+  <div class="wrap">
+
+    <div class="demo-banner">
+      <b>Interactive demo.</b> <span id="modeText">You are seeing <b>sample data</b> — no real
+      person's health information is shown here. Connect the live API below to use real data.</span>
+    </div>
+
+    <!-- API connection -->
+    <section class="card" id="apiCard">
+      <h2>Live API connection <span id="modePill" class="pill demo">DEMO DATA</span></h2>
+      <p class="muted">Point this page at a deployed Apollo API (for example the Cloud Run URL)
+         to switch from sample data to real data. The API only needs <code>GET /health</code> to be reachable.</p>
+      <div class="row">
+        <input type="url" id="apiUrl" placeholder="https://apollo-api-xxxx.run.app">
+        <button id="connectBtn" onclick="connectApi()">Connect</button>
+        <button class="secondary" id="disconnectBtn" onclick="disconnectApi()" disabled>Use sample data</button>
+      </div>
+      <p class="muted" id="apiStatus">Not connected — showing sample data.</p>
+
+      <div id="loginBox" class="hidden">
+        <h3>Sign in to the live API</h3>
+        <div class="row">
+          <input type="email" id="loginEmail" placeholder="you@example.org" autocomplete="username">
+          <input type="password" id="loginPassword" placeholder="Password" autocomplete="current-password">
+          <button onclick="login()">Sign in</button>
+          <button class="secondary" onclick="register()">Create account</button>
+        </div>
+        <p class="muted">A new account is created with the Caregiver role. Accounts live in the
+           connected API's database — never type a real password you use elsewhere.</p>
+        <p class="muted" id="loginMsg"></p>
+      </div>
+    </section>
+
+    <!-- Patients -->
+    <section class="card">
+      <h2>Patients</h2>
+      <div class="patients" id="patientList"></div>
+      <div id="patientDetail" class="muted" style="margin-top:10px;"></div>
+    </section>
+
+    <!-- Medications -->
+    <section class="card">
+      <h2>Medications today</h2>
+      <div id="medList"></div>
+      <h3>Add a medication</h3>
+      <div class="row">
+        <input type="text" id="medName" placeholder="Medication name, e.g. Levetiracetam">
+        <input type="text" id="medDosage" placeholder="Dosage, e.g. 500 mg" style="flex:0 1 160px;">
+        <input type="text" id="medSchedule" placeholder="Schedule, e.g. 08:00, 20:00" style="flex:0 1 180px;">
+        <button onclick="addMedication()">Add</button>
+      </div>
+    </section>
+
+    <!-- Seizure log -->
+    <section class="card">
+      <h2>Seizure log</h2>
+      <table>
+        <thead><tr><th>Date &amp; time</th><th>Duration</th><th>Notes</th><th>Source</th></tr></thead>
+        <tbody id="seizureRows"></tbody>
+      </table>
+      <h3>Log a seizure</h3>
+      <div class="row">
+        <input type="number" id="szDuration" placeholder="Duration (seconds)" min="0" style="flex:0 1 170px;">
+        <input type="text" id="szNotes" placeholder="Notes, e.g. Tonic-clonic, morning" style="flex:1;">
+        <button onclick="logSeizure()">Log seizure</button>
+      </div>
+      <p class="muted">Logging a seizure also creates a <b>SEIZURE_DETECTED</b> alert for the caregivers.</p>
+    </section>
+
+    <!-- SOS -->
+    <section class="card">
+      <h2>Emergency</h2>
+      <p class="muted">One tap notifies the patient's caregivers that help is needed right now.</p>
+      <button class="danger sos" onclick="sendSOS()">&#128680; SOS — I need help now</button>
+      <div id="sosBox" class="alert-box warn"></div>
+      <h3>Recent alerts</h3>
+      <table>
+        <thead><tr><th>When</th><th>Type</th><th>Status</th></tr></thead>
+        <tbody id="alertRows"></tbody>
+      </table>
+    </section>
+
+    <!-- How it works -->
+    <section class="card">
+      <h2>How it works</h2>
+      <div class="arch">
+        <div class="step"><b>This page / mobile app</b>Caregivers and patients see schedules, logs and alerts.</div>
+        <div class="arrow">&rarr;</div>
+        <div class="step"><b>Apollo API</b>Node.js + TypeScript + Express. Auth with JWT, roles for patient, caregiver, doctor and admin.</div>
+        <div class="arrow">&rarr;</div>
+        <div class="step"><b>PostgreSQL + Prisma</b>Patients, caregivers, medications, seizure events and alerts.</div>
+      </div>
+      <p class="muted" style="margin-top:12px;">The API runs on Google Cloud Run; the mobile app
+         (React Native + Expo) is next. Real-time notifications and device integrations are on the roadmap.</p>
+    </section>
+
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <p>Apollo Health Guardian is a support and monitoring tool. It does not replace medical care.
+       In a real emergency, always call your local emergency number first.</p>
+    <p><a href="https://github.com/Lmillan12co/Apollo-Health-Guardian">GitHub repository</a>
+       &middot; <a href="https://www.producthunt.com/contests/google-cloud-run-november-26">Build for Good — Product Hunt &times; Google Cloud Run</a></p>
+  </div>
+</footer>
+
+<script>
+"use strict";
+/* ------------------------------------------------------------------ */
+/* Sample data — clearly fake, for demo mode only.                     */
+/* ------------------------------------------------------------------ */
+var SAMPLE = {
+  patients: [
+    { id: "demo-maria", name: "Mar\u00eda Garc\u00eda", age: 34, since: "Epilepsy since 2019",
+      caregivers: [{ name: "Carlos Garc\u00eda", relation: "Husband" }, { name: "Ana Garc\u00eda", relation: "Sister" }],
+      medications: [
+        { id: "m1", name: "Levetiracetam", dosage: "500 mg", schedule: "08:00, 20:00", taken: true },
+        { id: "m2", name: "Lamotrigine", dosage: "100 mg", schedule: "09:00", taken: false }
+      ],
+      seizures: [
+        { occurredAt: "2026-11-14T07:42:00", durationSeconds: 90, notes: "Tonic-clonic, morning", source: "sample" },
+        { occurredAt: "2026-11-02T21:15:00", durationSeconds: 45, notes: "Focal, evening", source: "sample" }
+      ],
+      alerts: [
+        { createdAt: "2026-11-14T07:42:00", type: "SEIZURE_DETECTED", status: "ACKNOWLEDGED" }
+      ] },
+    { id: "demo-diego", name: "Diego Ram\u00edrez", age: 12, since: "Epilepsy since 2023",
+      caregivers: [{ name: "Luc\u00eda Ram\u00edrez", relation: "Mother" }],
+      medications: [
+        { id: "m3", name: "Valproate", dosage: "250 mg", schedule: "08:00, 14:00, 20:00", taken: true }
+      ],
+      seizures: [
+        { occurredAt: "2026-11-10T16:05:00", durationSeconds: 60, notes: "Absence, at school", source: "sample" }
+      ],
+      alerts: [] }
+  ]
+};
+
+var state = {
+  mode: "demo",            // "demo" | "live"
+  apiBase: "",
+  token: null,
+  patients: SAMPLE.patients,
+  selectedId: SAMPLE.patients[0].id
+};
+
+function $(id) { return document.getElementById(id); }
+function esc(s) {
+  return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+    return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+  });
+}
+function fmtDate(iso) {
+  try { return new Date(iso).toLocaleString(); } catch (e) { return iso; }
+}
+function selectedPatient() {
+  for (var i = 0; i < state.patients.length; i++) {
+    if (state.patients[i].id === state.selectedId) return state.patients[i];
+  }
+  return state.patients[0];
+}
+function setMode(mode) {
+  state.mode = mode;
+  var pill = $("modePill");
+  if (mode === "live") {
+    pill.textContent = "LIVE API";
+    pill.className = "pill live";
+    $("modeText").innerHTML = "You are connected to the <b>live API</b> at " +
+      esc(state.apiBase) + ". Data shown is real data from that API.";
+  } else {
+    pill.textContent = "DEMO DATA";
+    pill.className = "pill demo";
+    $("modeText").innerHTML = "You are seeing <b>sample data</b> — no real person's " +
+      "health information is shown here. Connect the live API below to use real data.";
+  }
+  $("disconnectBtn").disabled = (mode !== "live");
+  $("loginBox").classList.toggle("hidden", mode !== "live" || !!state.token);
+}
+
+async function api(path, options) {
+  options = options || {};
+  var headers = { "Content-Type": "application/json" };
+  if (state.token) headers["Authorization"] = "Bearer " + state.token;
+  var res = await fetch(state.apiBase.replace(/\/$/, "") + path, {
+    method: options.method || "GET",
+    headers: headers,
+    body: options.body ? JSON.stringify(options.body) : undefined
+  });
+  var text = await res.text();
+  var data = null;
+  try { data = JSON.parse(text); } catch (e) { data = { raw: text }; }
+  if (!res.ok) {
+    var err = new Error((data && data.message) || ("Request failed: " + res.status));
+    err.status = res.status;
+    throw err;
+  }
+  return data;
+}
+
+async function connectApi() {
+  var url = $("apiUrl").value.trim();
+  if (!url) { $("apiStatus").textContent = "Enter the API URL first (for example https://apollo-api-xxxx.run.app)."; return; }
+  if (!/^https?:\/\//.test(url)) url = "https://" + url;
+  state.apiBase = url.replace(/\/$/, "");
+  $("apiStatus").textContent = "Checking " + state.apiBase + "/health …";
+  try {
+    var res = await fetch(state.apiBase + "/health");
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    var health = await res.json();
+    if (health.status !== "ok") throw new Error("Unexpected health response");
+    try { localStorage.setItem("apollo-api-url", state.apiBase); } catch (e) {}
+    $("apiStatus").textContent = "Connected — API is healthy (" + (health.service || "apollo-api") + "). Sign in below to load real data.";
+    setMode("live");
+  } catch (e) {
+    state.apiBase = "";
+    $("apiStatus").textContent = "Could not reach the API at " + url + " (" + e.message + "). Check the URL and that the API allows cross-origin requests, then try again.";
+    setMode("demo");
+  }
+}
+
+function disconnectApi() {
+  state.apiBase = "";
+  state.token = null;
+  state.patients = SAMPLE.patients;
+  state.selectedId = SAMPLE.patients[0].id;
+  try { localStorage.removeItem("apollo-api-url"); } catch (e) {}
+  $("apiUrl").value = "";
+  $("apiStatus").textContent = "Not connected — showing sample data.";
+  $("loginMsg").textContent = "";
+  setMode("demo");
+  renderAll();
+}
+
+async function login() {
+  var email = $("loginEmail").value.trim();
+  var password = $("loginPassword").value;
+  if (!email || !password) { $("loginMsg").textContent = "Enter your email and password."; return; }
+  try {
+    var data = await api("/api/auth/login", { method: "POST", body: { email: email, password: password } });
+    state.token = data.token;
+    $("loginMsg").textContent = "Signed in as " + (data.user && data.user.name ? data.user.name : email) + ".";
+    setMode("live");
+    await loadLivePatients();
+  } catch (e) {
+    $("loginMsg").textContent = "Sign-in failed: " + e.message;
+  }
+}
+
+async function register() {
+  var email = $("loginEmail").value.trim();
+  var password = $("loginPassword").value;
+  if (!email || !password) { $("loginMsg").textContent = "Enter an email and a password (8+ characters)."; return; }
+  try {
+    var data = await api("/api/auth/register", {
+      method: "POST",
+      body: { name: email.split("@")[0], email: email, password: password, role: "CAREGIVER" }
+    });
+    state.token = data.token;
+    $("loginMsg").textContent = "Account created and signed in as " + email + ".";
+    setMode("live");
+    await loadLivePatients();
+  } catch (e) {
+    $("loginMsg").textContent = "Could not create the account: " + e.message;
+  }
+}
+
+async function loadLivePatients() {
+  try {
+    var data = await api("/api/patients");
+    state.patients = (data.patients || []).map(function (p) {
+      return { id: p.id, name: p.name, age: null,
+        since: p.birthDate ? "Born " + new Date(p.birthDate).toLocaleDateString() : "Patient",
+        caregivers: p.caregivers || [], medications: p.medications || [], seizures: [], alerts: [] };
+    });
+    if (state.patients.length > 0) {
+      state.selectedId = state.patients[0].id;
+      await loadLivePatientDetail(state.patients[0].id);
+    }
+    renderAll();
+  } catch (e) {
+    $("apiStatus").textContent = "Connected, but could not load patients: " + e.message +
+      " (the API may be the minimal version — see the README).";
+  }
+}
+
+async function loadLivePatientDetail(patientId) {
+  try {
+    var data = await api("/api/patients/" + encodeURIComponent(patientId));
+    var p = data.patient;
+    for (var i = 0; i < state.patients.length; i++) {
+      if (state.patients[i].id === patientId) {
+        state.patients[i].caregivers = p.caregivers || [];
+        state.patients[i].medications = (p.medications || []).map(function (m) {
+          return { id: m.id, name: m.name, dosage: m.dosage || "", schedule: m.schedule || "", taken: false };
+        });
+        state.patients[i].seizures = (p.seizures || []).map(function (s) {
+          return { occurredAt: s.occurredAt, durationSeconds: s.durationSeconds, notes: s.notes || "", source: "live" };
+        });
+        state.patients[i].alerts = (p.alerts || []).map(function (a) {
+          return { createdAt: a.createdAt, type: a.type, status: a.status };
+        });
+      }
+    }
+  } catch (e) { /* keep whatever we already have */ }
+}
+
+function renderAll() {
+  renderPatients();
+  renderMeds();
+  renderSeizures();
+  renderAlerts();
+}
+
+function renderPatients() {
+  var html = "";
+  state.patients.forEach(function (p) {
+    html += '<div class="patient-chip' + (p.id === state.selectedId ? " active" : "") +
+      '" onclick="selectPatient(\'' + esc(p.id) + '\')"><b>' + esc(p.name) + "</b><span>" +
+      (p.age ? esc(p.age) + " years &middot; " : "") + esc(p.since) + "</span></div>";
+  });
+  if (state.patients.length === 0) {
+    html = '<p class="muted">No patients yet. In live mode, patients are created through the API ' +
+      "(POST /api/patients). In demo mode, sample patients are shown instead.</p>";
+  }
+  $("patientList").innerHTML = html;
+  var p = selectedPatient();
+  if (p) {
+    var cg = (p.caregivers || []).map(function (c) {
+      return esc(c.name) + (c.relation ? " (" + esc(c.relation) + ")" : "");
+    }).join(", ") || "No caregivers linked yet";
+    $("patientDetail").innerHTML = "<b>Caregivers:</b> " + cg;
+  } else {
+    $("patientDetail").innerHTML = "";
+  }
+}
+
+function selectPatient(id) {
+  state.selectedId = id;
+  if (state.mode === "live") { loadLivePatientDetail(id).then(renderAll); }
+  else { renderAll(); }
+}
+
+function renderMeds() {
+  var p = selectedPatient();
+  var meds = p ? (p.medications || []) : [];
+  if (meds.length === 0) { $("medList").innerHTML = '<p class="muted">No medications recorded for this patient yet.</p>'; return; }
+  $("medList").innerHTML = meds.map(function (m) {
+    return '<div class="med"><span><b>' + esc(m.name) + "</b>" +
+      (m.dosage ? " &middot; " + esc(m.dosage) : "") +
+      (m.schedule ? ' &middot; <span class="muted">' + esc(m.schedule) + "</span>" : "") +
+      '</span><span class="' + (m.taken ? "taken" : "") + '">' + (m.taken ? "Taken ✓" : "Pending") + "</span></div>";
+  }).join("");
+}
+
+function renderSeizures() {
+  var p = selectedPatient();
+  var rows = p ? (p.seizures || []) : [];
+  if (rows.length === 0) {
+    $("seizureRows").innerHTML = '<tr><td colspan="4" class="muted">No seizures logged yet.</td></tr>';
+    return;
+  }
+  $("seizureRows").innerHTML = rows.map(function (s) {
+    return "<tr><td>" + esc(fmtDate(s.occurredAt)) + "</td><td>" +
+      (s.durationSeconds != null ? esc(s.durationSeconds) + " s" : "—") + "</td><td>" +
+      esc(s.notes || "") + '</td><td><span class="pill ' + (s.source === "live" ? "live" : "demo") + '">' +
+      (s.source === "live" ? "LIVE" : "SAMPLE") + "</span></td></tr>";
+  }).join("");
+}
+
+function renderAlerts() {
+  var p = selectedPatient();
+  var rows = p ? (p.alerts || []) : [];
+  if (rows.length === 0) {
+    $("alertRows").innerHTML = '<tr><td colspan="3" class="muted">No alerts.</td></tr>';
+    return;
+  }
+  $("alertRows").innerHTML = rows.map(function (a) {
+    return "<tr><td>" + esc(fmtDate(a.createdAt)) + "</td><td>" + esc(a.type) +
+      "</td><td>" + esc(a.status) + "</td></tr>";
+  }).join("");
+}
+
+async function addMedication() {
+  var p = selectedPatient();
+  if (!p) return;
+  var name = $("medName").value.trim();
+  var dosage = $("medDosage").value.trim();
+  var schedule = $("medSchedule").value.trim();
+  if (!name) { alert("Enter a medication name."); return; }
+  if (state.mode === "live") {
+    try {
+      var data = await api("/api/medications", {
+        method: "POST", body: { patientId: p.id, name: name, dosage: dosage, schedule: schedule }
+      });
+      p.medications.push({ id: data.medication.id, name: name, dosage: dosage, schedule: schedule, taken: false });
+    } catch (e) { alert("Could not add the medication: " + e.message); return; }
+  } else {
+    p.medications.push({ id: "m" + Date.now(), name: name, dosage: dosage, schedule: schedule, taken: false });
+  }
+  $("medName").value = ""; $("medDosage").value = ""; $("medSchedule").value = "";
+  renderMeds();
+}
+
+async function logSeizure() {
+  var p = selectedPatient();
+  if (!p) return;
+  var duration = parseInt($("szDuration").value, 10);
+  var notes = $("szNotes").value.trim();
+  var entry = { occurredAt: new Date().toISOString(),
+    durationSeconds: isNaN(duration) ? null : duration, notes: notes, source: state.mode };
+  if (state.mode === "live") {
+    try {
+      await api("/api/seizures", {
+        method: "POST",
+        body: { patientId: p.id, durationSeconds: entry.durationSeconds, notes: notes }
+      });
+      await api("/api/alerts", {
+        method: "POST", body: { patientId: p.id, type: "SEIZURE_DETECTED" }
+      });
+      await loadLivePatientDetail(p.id);
+    } catch (e) { alert("Could not log the seizure: " + e.message); return; }
+  } else {
+    p.seizures.unshift(entry);
+    p.alerts.unshift({ createdAt: entry.occurredAt, type: "SEIZURE_DETECTED", status: "PENDING (demo)" });
+  }
+  $("szDuration").value = ""; $("szNotes").value = "";
+  renderSeizures();
+  renderAlerts();
+}
+
+async function sendSOS() {
+  var p = selectedPatient();
+  if (!p) return;
+  var box = $("sosBox");
+  if (state.mode === "live") {
+    try {
+      await api("/api/alerts/sos", { method: "POST", body: { patientId: p.id } });
+      box.className = "alert-box warn show";
+      box.textContent = "SOS alert sent for " + p.name + ". Caregivers have been notified (live API).";
+      await loadLivePatientDetail(p.id);
+      renderAlerts();
+    } catch (e) {
+      box.className = "alert-box warn show";
+      box.textContent = "Could not send the SOS alert: " + e.message;
+    }
+  } else {
+    var names = (p.caregivers || []).map(function (c) { return c.name; }).join(", ") || "the linked caregivers";
+    p.alerts.unshift({ createdAt: new Date().toISOString(), type: "SOS", status: "PENDING (demo)" });
+    box.className = "alert-box warn show";
+    box.textContent = "DEMO — an SOS alert for " + p.name + " would notify " + names +
+      " right now. No real alert was sent.";
+    renderAlerts();
+  }
+}
+
+/* Restore a previously connected API URL, if any. */
+try {
+  var saved = localStorage.getItem("apollo-api-url");
+  if (saved) { $("apiUrl").value = saved; }
+} catch (e) {}
+
+renderAll();
+setMode("demo");
+</script>
+</body>
+</html>
